@@ -10,7 +10,8 @@ import {
 function App() {
   const [client, setClient] = useState<Client | null>(null);
   const [opId, setOpId] = useState<string>("");
-
+  const [status, setStatus] = useState<EOperationStatus | null>(null);
+  const [isLoading, setIsLoanding] = useState(false);
   async function initClient() {
     const myClient = await ClientFactory.createDefaultClient(
       DefaultProviderUrls.BUILDNET,
@@ -23,6 +24,7 @@ function App() {
   let shouldCancel = false;
 
   async function getStatus() {
+    setIsLoanding(true);
     if (isRunning) {
       console.log("getStatus is already running. Cancelling previous run.");
       shouldCancel = true;
@@ -44,6 +46,7 @@ function App() {
 
         const status = await client.smartContracts().getOperationStatus(opId);
         console.log(EOperationStatus[status]);
+        setStatus(status);
         if (status === EOperationStatus.FINAL_SUCCESS) {
           break;
         }
@@ -52,6 +55,7 @@ function App() {
     }
 
     isRunning = false;
+    setIsLoanding(false);
   }
 
   useEffect(() => {
@@ -62,12 +66,15 @@ function App() {
     <>
       <h1>Massa Get Status</h1>
       <p>Operation Id: {opId}</p>
+      <p>Status: {status ? EOperationStatus[status] : "no status"}</p>
       <input
         type="text"
         value={opId}
         onChange={(e) => setOpId(e.target.value)}
       />
-      <button onClick={getStatus}>Get Status</button>
+      <button onClick={getStatus} disabled={isLoading}>
+        {isLoading ? "Loading..." : "Get Status"}
+      </button>
     </>
   );
 }
